@@ -77,7 +77,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 	_, err := os.Stat(s)
 
 	if err == nil {
-		content, err := fetchLocalContent(s)
+		content, err := ioutil.ReadFile(s)
 
 		if err != nil {
 			exit(err)
@@ -124,17 +124,6 @@ func fetchRemoteContent(url string) ([]byte, error) {
 	}
 
 	return ioutil.ReadAll(resp.Body)
-}
-
-func fetchLocalContent(fpath string) ([]byte, error) {
-	f, err := os.Open(fpath)
-	defer f.Close()
-
-	if err != nil {
-		exit(err)
-	}
-
-	return ioutil.ReadAll(f)
 }
 
 func exit(err error) {
