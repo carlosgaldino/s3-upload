@@ -80,18 +80,8 @@ func main() {
 func newObjectInfo(s string) (*objectInfo, error) {
 	_, err := os.Stat(s)
 
-	if os.IsNotExist(err) {
-		fmt.Printf("%s is not a file, will attempt to fetch it as an URL\n", s)
-
-		resp, err := http.Get(s)
-		defer resp.Body.Close()
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to get: %s", s)
-			os.Exit(1)
-		}
-
-		content, err := ioutil.ReadAll(resp.Body)
+	if err == nil {
+		content, err := fetchLocalContent(s)
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -101,11 +91,10 @@ func newObjectInfo(s string) (*objectInfo, error) {
 		obj := buildObjectInfo(content, s)
 
 		return obj, nil
-	} else if err == nil {
-		f, err := os.Open(s)
-		defer f.Close()
+	} else if os.IsNotExist(err) {
+		fmt.Printf("%s is not a file, will attempt to fetch it as an URL\n", s)
 
-		content, err := ioutil.ReadAll(f)
+		content, err := fetchRemoteContent(s)
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -130,4 +119,28 @@ func buildObjectInfo(content []byte, s string) *objectInfo {
 		key:         buildKey(s),
 		contentType: mime.TypeByExtension(filepath.Ext(s)),
 	}
+}
+
+func fetchRemoteContent(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	defer resp.Body.Close()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get: %s", url)
+		os.Exit(1)
+	}
+
+	return ioutil.ReadAll(resp.Body)
+}
+
+func fetchLocalContent(fpath string) ([]byte, error) {
+	f, err := os.Open(fpath)
+	defer f.Close()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	return ioutil.ReadAll(f)
 }
