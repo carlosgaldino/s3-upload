@@ -34,21 +34,18 @@ type objectInfo struct {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s filename\n", os.Args[0])
-		os.Exit(1)
+		exit(fmt.Errorf("usage: %s filename", os.Args[0]))
 	}
 
 	user, err := user.Current()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		exit(err)
 	}
 
 	var conf config
 	credentialsPath := user.HomeDir + "/.aws-credentials.toml"
 	if _, err := toml.DecodeFile(credentialsPath, &conf); err != nil {
-		fmt.Fprintf(os.Stderr, "error while decoding config file: %v\n", err)
-		os.Exit(1)
+		exit(fmt.Errorf("error while decoding config file: %v", err))
 	}
 
 	awsConfig := aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(conf.AccessKey, conf.SecretAcessKey, "")).WithRegion(conf.Region)
@@ -56,7 +53,7 @@ func main() {
 
 	obj, err := newObjectInfo(os.Args[1])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error while opening file: %v\n", err)
+		exit(fmt.Errorf("error while opening file: %v", err))
 	}
 
 	params := &s3.PutObjectInput{
@@ -69,8 +66,7 @@ func main() {
 
 	_, err = svc.PutObject(params)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to upload object: %v\n", err)
-		os.Exit(1)
+		exit(fmt.Errorf("failed to upload object: %v", err))
 	}
 
 	url := fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
@@ -84,8 +80,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 		content, err := fetchLocalContent(s)
 
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			exit(err)
 		}
 
 		obj := buildObjectInfo(content, s)
@@ -97,8 +92,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 		content, err := fetchRemoteContent(s)
 
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			exit(err)
 		}
 
 		obj := buildObjectInfo(content, s)
@@ -126,8 +120,7 @@ func fetchRemoteContent(url string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to get: %s", url)
-		os.Exit(1)
+		exit(fmt.Errorf("failed to get: %s", url))
 	}
 
 	return ioutil.ReadAll(resp.Body)
@@ -138,9 +131,13 @@ func fetchLocalContent(fpath string) ([]byte, error) {
 	defer f.Close()
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		exit(err)
 	}
 
 	return ioutil.ReadAll(f)
+}
+
+func exit(err error) {
+	fmt.Fprintln(os.Stderr, err)
+	os.Exit(1)
 }
