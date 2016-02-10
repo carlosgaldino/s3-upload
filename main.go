@@ -45,7 +45,7 @@ func main() {
 	var conf config
 	credentialsPath := user.HomeDir + "/.aws-credentials.toml"
 	if _, err := toml.DecodeFile(credentialsPath, &conf); err != nil {
-		exit(fmt.Errorf("error while decoding config file: %v", err))
+		exit(fmt.Errorf("invalid config file: %v", err))
 	}
 
 	awsConfig := aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(conf.AccessKey, conf.SecretAcessKey, "")).WithRegion(conf.Region)
@@ -53,7 +53,7 @@ func main() {
 
 	obj, err := newObjectInfo(os.Args[1])
 	if err != nil {
-		exit(fmt.Errorf("error while opening file: %v", err))
+		exit(fmt.Errorf("unable to get contents for file: %v", err))
 	}
 
 	params := &s3.PutObjectInput{
@@ -87,7 +87,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 
 		return obj, nil
 	} else if os.IsNotExist(err) {
-		fmt.Printf("%s is not a file, will attempt to fetch it as an URL\n", s)
+		fmt.Printf("%s is not a local file, will attempt to fetch it as an URL\n", s)
 
 		content, err := fetchRemoteContent(s)
 
