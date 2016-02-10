@@ -77,7 +77,7 @@ func main() {
 	fmt.Printf("uploaded %s to %s\n", url, conf.Bucket)
 }
 
-func newObjectInfo(s string) (*objectInfo, error) {
+func newObjectInfo(s string) (objectInfo, error) {
 	_, err := os.Stat(s)
 
 	if err == nil {
@@ -106,15 +106,15 @@ func newObjectInfo(s string) (*objectInfo, error) {
 		return obj, nil
 	}
 
-	return nil, err
+	return objectInfo{}, err
 }
 
 func buildKey(s string) string {
 	return fmt.Sprintf("%d%s", time.Now().Unix(), filepath.Base(s))
 }
 
-func buildObjectInfo(content []byte, s string) *objectInfo {
-	return &objectInfo{
+func buildObjectInfo(content []byte, s string) objectInfo {
+	return objectInfo{
 		body:        bytes.NewReader(content),
 		key:         buildKey(s),
 		contentType: mime.TypeByExtension(filepath.Ext(s)),
