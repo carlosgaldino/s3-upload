@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -104,7 +105,8 @@ func newObjectInfo(s string) (objectInfo, error) {
 }
 
 func buildKey(s string) string {
-	return fmt.Sprintf("%d-%s", time.Now().Unix(), filepath.Base(s))
+	split := strings.Split(filepath.Base(s), ".")
+	return fmt.Sprintf("%s-%d.%s", split[0], time.Now().Unix(), split[1])
 }
 
 func buildObjectInfo(content []byte, s string) objectInfo {
