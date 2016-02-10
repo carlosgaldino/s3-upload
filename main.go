@@ -104,7 +104,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 }
 
 func buildKey(s string) string {
-	return fmt.Sprintf("%d%s", time.Now().Unix(), filepath.Base(s))
+	return fmt.Sprintf("%d-%s", time.Now().Unix(), filepath.Base(s))
 }
 
 func buildObjectInfo(content []byte, s string) objectInfo {
