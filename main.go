@@ -43,7 +43,7 @@ func main() {
 	}
 
 	var conf config
-	credentialsPath := user.HomeDir + "/.aws-credentials.toml"
+	credentialsPath := filepath.Join(user.HomeDir, ".aws-credentials.toml")
 	if _, err := toml.DecodeFile(credentialsPath, &conf); err != nil {
 		exit(fmt.Errorf("invalid config file: %v", err))
 	}
