@@ -117,11 +117,11 @@ func buildObjectInfo(content []byte, s string) objectInfo {
 
 func fetchRemoteContent(url string) ([]byte, error) {
 	resp, err := http.Get(url)
-	defer resp.Body.Close()
 
 	if err != nil {
 		exit(fmt.Errorf("failed to get: %s", url))
 	}
+	defer resp.Body.Close()
 
 	return ioutil.ReadAll(resp.Body)
 }
