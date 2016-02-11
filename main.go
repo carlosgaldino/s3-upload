@@ -87,7 +87,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 		obj := buildObjectInfo(content, s)
 
 		return obj, nil
-	} else if os.IsNotExist(err) {
+	} else if os.IsNotExist(err) && isURL(s) {
 		fmt.Printf("%s is not a local file, will attempt to fetch it as an URL\n", s)
 
 		content, err := fetchRemoteContent(s)
@@ -131,4 +131,16 @@ func fetchRemoteContent(url string) ([]byte, error) {
 func exit(err error) {
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(1)
+}
+
+func isURL(str string) bool {
+	prefixes := []string{"http://", "https://"}
+
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(str, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
