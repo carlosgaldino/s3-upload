@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -34,8 +35,16 @@ type objectInfo struct {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		exit(fmt.Errorf("usage: %s filename", os.Args[0]))
+	var private bool
+	flag.BoolVar(&private, "p", false, "private upload")
+
+	flag.Parse()
+
+	file := flag.Arg(0)
+	if file == "" {
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] filename\n", os.Args[0])
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
 	user, err := user.Current()
@@ -52,7 +61,7 @@ func main() {
 	awsConfig := aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(conf.AccessKey, conf.SecretAcessKey, "")).WithRegion(conf.Region)
 	svc := s3.New(session.New(awsConfig))
 
-	obj, err := newObjectInfo(os.Args[1])
+	obj, err := newObjectInfo(file)
 	if err != nil {
 		exit(fmt.Errorf("unable to read file: %v", err))
 	}
@@ -62,7 +71,10 @@ func main() {
 		Key:         &obj.key,
 		Body:        obj.body,
 		ContentType: &obj.contentType,
-		ACL:         aws.String("public-read"),
+	}
+
+	if !private {
+		params.ACL = aws.String("public-read")
 	}
 
 	_, err = svc.PutObject(params)
@@ -70,8 +82,12 @@ func main() {
 		exit(fmt.Errorf("failed to upload object: %v", err))
 	}
 
-	url := fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
-	fmt.Printf("uploaded %s to %s\n", url, conf.Bucket)
+	if private {
+		fmt.Printf("uploaded %s to %s\n", obj.key, conf.Bucket)
+	} else {
+		url := fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
+		fmt.Printf("uploaded %s to %s\n", url, conf.Bucket)
+	}
 }
 
 func newObjectInfo(s string) (objectInfo, error) {
