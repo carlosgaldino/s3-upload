@@ -81,7 +81,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 		content, err := ioutil.ReadFile(s)
 
 		if err != nil {
-			exit(err)
+			return objectInfo{}, err
 		}
 
 		obj := buildObjectInfo(content, s)
@@ -93,7 +93,7 @@ func newObjectInfo(s string) (objectInfo, error) {
 		content, err := fetchRemoteContent(s)
 
 		if err != nil {
-			exit(err)
+			return objectInfo{}, err
 		}
 
 		obj := buildObjectInfo(content, s)
@@ -121,7 +121,7 @@ func fetchRemoteContent(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		exit(fmt.Errorf("failed to get: %s", url))
+		return nil, err
 	}
 	defer resp.Body.Close()
 
