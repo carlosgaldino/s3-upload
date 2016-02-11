@@ -42,7 +42,7 @@ func main() {
 
 	file := flag.Arg(0)
 	if file == "" {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-p] filename\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] <filename>\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
