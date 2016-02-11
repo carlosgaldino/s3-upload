@@ -54,7 +54,7 @@ func main() {
 
 	obj, err := newObjectInfo(os.Args[1])
 	if err != nil {
-		exit(fmt.Errorf("unable to get contents for file: %v", err))
+		exit(fmt.Errorf("unable to read file: %v", err))
 	}
 
 	params := &s3.PutObjectInput{
