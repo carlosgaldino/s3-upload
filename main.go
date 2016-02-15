@@ -34,8 +34,9 @@ type objectInfo struct {
 	contentType string
 }
 
+var private bool
+
 func main() {
-	var private bool
 	flag.BoolVar(&private, "p", false, "private upload")
 
 	flag.Parse()
@@ -82,12 +83,7 @@ func main() {
 		exit(fmt.Errorf("failed to upload object: %v", err))
 	}
 
-	if private {
-		fmt.Printf("uploaded %s to %s\n", obj.key, conf.Bucket)
-	} else {
-		url := fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
-		fmt.Printf("uploaded %s to %s\n", url, conf.Bucket)
-	}
+	fmt.Printf("uploaded %s\n", buildOutputURL(obj, conf))
 }
 
 func newObjectInfo(s string) (objectInfo, error) {
@@ -163,4 +159,16 @@ func isURL(str string) bool {
 	}
 
 	return false
+}
+
+func buildOutputURL(obj objectInfo, conf config) string {
+	var url string
+
+	if private {
+		url = fmt.Sprintf("https://s3-%s.amazonaws.com/%s/%s", conf.Region, conf.Bucket, obj.key)
+	} else {
+		url = fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
+	}
+
+	return url
 }
