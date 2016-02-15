@@ -26,5 +26,5 @@ structure:
 access_key_id = "ACCESS_KEY_ID"
 secret_access_key = "SECRET_ACCESS_KEY"
 bucket = "my-bucket"
-region = "us-east-1"
+region = "us-east-1" # Of course the region may be different.
 ```
