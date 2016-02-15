@@ -13,11 +13,12 @@ Make sure `$GOPATH/bin` is in your `$PATH`.
 ## Usage
 
 ```
-Usage: s3-upload [-p] <filename>
+Usage: s3-upload [-p] <filename>...
   -p	private upload
 ```
 
-`filename` can be a local file or an URL.
+`filename` can be a local file or an URL. And you can pass multiple filenames as
+well.
 
 You also need to have a `~/.aws-credentials.toml` file with the following
 structure:

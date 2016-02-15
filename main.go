@@ -35,6 +35,11 @@ type objectInfo struct {
 	contentType string
 }
 
+type result struct {
+	url string
+	err error
+}
+
 var private bool
 
 func main() {
@@ -42,9 +47,9 @@ func main() {
 
 	flag.Parse()
 
-	file := flag.Arg(0)
-	if file == "" {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-p] <filename>\n", os.Args[0])
+	files := flag.Args()
+	if len(files) == 0 {
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] <filename>...\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -63,9 +68,28 @@ func main() {
 	awsConfig := aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(conf.AccessKey, conf.SecretAcessKey, "")).WithRegion(conf.Region)
 	svc := s3.New(session.New(awsConfig))
 
+	results := make(chan result, len(files))
+	for _, file := range files {
+		go uploadFile(file, conf, svc, results)
+	}
+
+	for range files {
+		res := <-results
+
+		if res.err != nil {
+			fmt.Fprintln(os.Stderr, fmt.Errorf("failed to upload object: %v", res.err))
+		} else {
+			fmt.Printf("uploaded %s\n", res.url)
+		}
+	}
+	close(results)
+}
+
+func uploadFile(file string, conf config, svc *s3.S3, results chan<- result) {
 	obj, err := newObjectInfo(file)
 	if err != nil {
-		exit(fmt.Errorf("unable to read file: %v", err))
+		results <- result{err: fmt.Errorf("unable to read file: %v", err)}
+		return
 	}
 
 	params := &s3.PutObjectInput{
@@ -80,11 +104,12 @@ func main() {
 	}
 
 	_, err = svc.PutObject(params)
-	if err != nil {
-		exit(fmt.Errorf("failed to upload object: %v", err))
-	}
 
-	fmt.Printf("uploaded %s\n", buildOutputURL(obj, conf))
+	if err != nil {
+		results <- result{err: err}
+	} else {
+		results <- result{url: buildOutputURL(obj, conf)}
+	}
 }
 
 func newObjectInfo(s string) (objectInfo, error) {
