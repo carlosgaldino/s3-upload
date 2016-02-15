@@ -26,6 +26,7 @@ type config struct {
 	SecretAcessKey string `toml:"secret_access_key"`
 	Region         string
 	Bucket         string
+	CNAME          bool
 }
 
 type objectInfo struct {
@@ -167,7 +168,19 @@ func buildOutputURL(obj objectInfo, conf config) string {
 	if private {
 		url = fmt.Sprintf("https://s3-%s.amazonaws.com/%s/%s", conf.Region, conf.Bucket, obj.key)
 	} else {
+		url = buildPublicURL(obj, conf)
+	}
+
+	return url
+}
+
+func buildPublicURL(obj objectInfo, conf config) string {
+	var url string
+
+	if conf.CNAME {
 		url = fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
+	} else {
+		url = fmt.Sprintf("http://%s.s3.amazonaws.com/%s", conf.Bucket, obj.key)
 	}
 
 	return url
