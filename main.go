@@ -144,7 +144,13 @@ func newObjectInfo(s string) (objectInfo, error) {
 
 func buildKey(s string) string {
 	split := strings.Split(filepath.Base(s), ".")
-	return fmt.Sprintf("%s-%d.%s", split[0], time.Now().Unix(), split[1])
+	key := fmt.Sprintf("%s-%d", split[0], time.Now().Unix())
+
+	if len(split) == 2 {
+		key += fmt.Sprintf(".%s", split[1])
+	}
+
+	return key
 }
 
 func buildObjectInfo(content []byte, s string) objectInfo {
