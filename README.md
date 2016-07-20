@@ -13,7 +13,9 @@ Make sure `$GOPATH/bin` is in your `$PATH`.
 ## Usage
 
 ```
-Usage: s3-upload [-p] [-t] <filename>...
+Usage: s3-upload [-p] [-t] [-bucket <bucketName>] <filename>...
+  -bucket string
+        bucket to upload (default "default")
   -p	private upload
   -t	add timestamp
 ```
@@ -27,9 +29,16 @@ structure:
 ```toml
 access_key_id = "ACCESS_KEY_ID"
 secret_access_key = "SECRET_ACCESS_KEY"
-bucket = "my-bucket"
-region = "us-east-1" # Of course the region may be different.
-cname = true # If omitted or `false` the URL won't be customized.
+
+[buckets]
+    [buckets.default]
+        bucket = "my-bucket"
+        region = "us-east-1" # Of course the region may be different.
+        cname = true # If omitted or `false` the URL won't be customized.
+
+    [buckets.gifs]
+        bucket = "my-gifs-bucket"
+        region = "us-east-1"
 ```
 
 For more information about CNAME customization take a look at: http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html#VirtualHostingCustomURLs

@@ -24,9 +24,13 @@ import (
 type config struct {
 	AccessKey      string `toml:"access_key_id"`
 	SecretAcessKey string `toml:"secret_access_key"`
-	Region         string
-	Bucket         string
-	CNAME          bool
+	Buckets        map[string]bucket
+}
+
+type bucket struct {
+	Region string
+	Name   string
+	CNAME  bool
 }
 
 type objectInfo struct {
@@ -41,19 +45,21 @@ type result struct {
 }
 
 var (
-	private   bool
-	timestamp bool
+	private    bool
+	timestamp  bool
+	bucketName string
 )
 
 func main() {
 	flag.BoolVar(&private, "p", false, "private upload")
 	flag.BoolVar(&timestamp, "t", false, "add timestamp")
+	flag.StringVar(&bucketName, "bucket", "default", "bucket to upload")
 
 	flag.Parse()
 
 	files := flag.Args()
 	if len(files) == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-p] [-t] <filename>...\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] [-t] [-bucket <bucketName>] <filename>...\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -69,7 +75,11 @@ func main() {
 		exit(fmt.Errorf("invalid config file: %v", err))
 	}
 
-	awsConfig := aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(conf.AccessKey, conf.SecretAcessKey, "")).WithRegion(conf.Region)
+	if _, ok := conf.Buckets[bucketName]; !ok {
+		exit(fmt.Errorf("missing config for bucket: %v", bucketName))
+	}
+
+	awsConfig := aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(conf.AccessKey, conf.SecretAcessKey, "")).WithRegion(conf.Buckets[bucketName].Region)
 	svc := s3.New(session.New(awsConfig))
 
 	results := make(chan result, len(files))
@@ -96,8 +106,9 @@ func uploadFile(file string, conf config, svc *s3.S3, results chan<- result) {
 		return
 	}
 
+	bname := conf.Buckets[bucketName].Name
 	params := &s3.PutObjectInput{
-		Bucket:      &conf.Bucket,
+		Bucket:      &bname,
 		Key:         &obj.key,
 		Body:        obj.body,
 		ContentType: &obj.contentType,
@@ -205,9 +216,10 @@ func isURL(str string) bool {
 
 func buildOutputURL(obj objectInfo, conf config) string {
 	var url string
+	bucket := conf.Buckets[bucketName]
 
 	if private {
-		url = fmt.Sprintf("https://s3-%s.amazonaws.com/%s/%s", conf.Region, conf.Bucket, obj.key)
+		url = fmt.Sprintf("https://s3-%s.amazonaws.com/%s/%s", bucket.Region, bucket.Name, obj.key)
 	} else {
 		url = buildPublicURL(obj, conf)
 	}
@@ -217,11 +229,12 @@ func buildOutputURL(obj objectInfo, conf config) string {
 
 func buildPublicURL(obj objectInfo, conf config) string {
 	var url string
+	bucket := conf.Buckets[bucketName]
 
-	if conf.CNAME {
-		url = fmt.Sprintf("http://%s/%s", conf.Bucket, obj.key)
+	if bucket.CNAME {
+		url = fmt.Sprintf("http://%s/%s", bucket.Name, obj.key)
 	} else {
-		url = fmt.Sprintf("http://%s.s3.amazonaws.com/%s", conf.Bucket, obj.key)
+		url = fmt.Sprintf("http://%s.s3.amazonaws.com/%s", bucket.Name, obj.key)
 	}
 
 	return url
