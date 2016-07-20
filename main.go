@@ -40,16 +40,20 @@ type result struct {
 	err error
 }
 
-var private bool
+var (
+	private   bool
+	timestamp bool
+)
 
 func main() {
 	flag.BoolVar(&private, "p", false, "private upload")
+	flag.BoolVar(&timestamp, "t", false, "add timestamp")
 
 	flag.Parse()
 
 	files := flag.Args()
 	if len(files) == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-p] <filename>...\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] [-t] <filename>...\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -144,7 +148,13 @@ func newObjectInfo(s string) (objectInfo, error) {
 
 func buildKey(s string) string {
 	split := strings.Split(filepath.Base(s), ".")
-	key := fmt.Sprintf("%s-%d", split[0], time.Now().Unix())
+
+	var key string
+	if timestamp {
+		key = fmt.Sprintf("%s-%d", split[0], time.Now().Unix())
+	} else {
+		key = split[0]
+	}
 
 	if len(split) == 2 {
 		key += fmt.Sprintf(".%s", split[1])
