@@ -48,18 +48,20 @@ var (
 	private    bool
 	timestamp  bool
 	bucketName string
+	path       string
 )
 
 func main() {
 	flag.BoolVar(&private, "p", false, "private upload")
 	flag.BoolVar(&timestamp, "t", false, "add timestamp")
 	flag.StringVar(&bucketName, "bucket", "default", "bucket to upload")
+	flag.StringVar(&path, "path", "", "path prefix")
 
 	flag.Parse()
 
 	files := flag.Args()
 	if len(files) == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-p] [-t] [-bucket <bucketName>] <filename>...\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [-p] [-t] [-path <pathPrefix>] [-bucket <bucketName>] <filename>...\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -165,6 +167,10 @@ func buildKey(s string) string {
 		key = fmt.Sprintf("%s-%d", split[0], time.Now().Unix())
 	} else {
 		key = split[0]
+	}
+
+	if path != "" {
+		key = fmt.Sprintf("%s/%s", path, key)
 	}
 
 	if len(split) == 2 {

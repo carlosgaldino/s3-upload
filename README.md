@@ -13,10 +13,12 @@ Make sure `$GOPATH/bin` is in your `$PATH`.
 ## Usage
 
 ```
-Usage: s3-upload [-p] [-t] [-bucket <bucketName>] <filename>...
+Usage: s3-upload [-p] [-t] [-path <pathPrefix>] [-bucket <bucketName>] <filename>...
   -bucket string
         bucket to upload (default "default")
   -p	private upload
+  -path string
+        path prefix
   -t	add timestamp
 ```
 
